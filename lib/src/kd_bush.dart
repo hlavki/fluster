@@ -17,7 +17,7 @@ class KDBush {
     ids = List.filled(points.length, -1);
     coordinates = List.filled(points.length * 2, double.infinity);
 
-    for (var i = 0; i < points.length; i++) {
+    for (int i = 0; i < points.length; i++) {
       ids[i] = i;
       coordinates[i * 2] = points[i].x;
       coordinates[(i * 2) + 1] = points[i].y;
@@ -112,7 +112,7 @@ class KDBush {
   }
 
   List<int> within(double qx, double qy, double r) {
-    var stack = Queue();
+    Queue stack = Queue();
     stack.add(0);
     stack.add(ids.length - 1);
     stack.add(0);
@@ -239,8 +239,8 @@ class KDBush {
   }
 
   double _squaredDistance(double ax, double ay, double bx, double by) {
-    var dx = ax - bx;
-    var dy = ay - by;
+    double dx = ax - bx;
+    double dy = ay - by;
 
     return dx * dx + dy * dy;
   }

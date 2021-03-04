@@ -133,7 +133,7 @@ class Fluster<T extends Clusterable> {
     double r = radius! / (extent! * math.pow(2, originZoom - 1));
     List<int?> ids = index.within(origin.x, origin.y, r);
 
-    var children = <T>[];
+    List<T> children = [];
     for (int? id in ids) {
       BaseCluster c = index.points[id!];
 
@@ -150,7 +150,7 @@ class Fluster<T extends Clusterable> {
   /// Returns a list of standalone points (not clusters) that are children of
   /// the given cluster.
   List<T> points(int clusterId) {
-    var points = <T>[];
+    List<T> points = [];
 
     _extractClusterPoints(clusterId, points);
 
