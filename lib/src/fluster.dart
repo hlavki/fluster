@@ -13,17 +13,17 @@ import 'point_cluster.dart';
 /// The List to be clustered must contain objects that conform to Clusterable.
 class Fluster<T extends Clusterable> {
   /// Any zoom value below minZoom will not generate clusters.
-  final int minZoom;
+  final int? minZoom;
 
   /// Any zoom value above maxZoom will not generate clusters.
   final int maxZoom;
 
   /// Cluster radius in pixels.
-  final int radius;
+  final int? radius;
 
   /// Adjust the extent by powers of 2 (e.g. 512. 1024, ... max 8192) to get the
   /// desired distance between markers where they start to cluster.
-  final int extent;
+  final int? extent;
 
   /// The size of the KD-tree leaf node, which affects performance.
   final int nodeSize;
@@ -32,23 +32,23 @@ class Fluster<T extends Clusterable> {
   final List<T> _points;
 
   /// Store the clusters for each zoom level.
-  final List<KDBush> _trees;
+  final List<KDBush?> _trees;
 
   /// A callback to generate clusters of the given input type.
   final T Function(BaseCluster, double, double) _createCluster;
 
-  Fluster(
-      {this.minZoom,
-      this.maxZoom,
-      this.radius,
-      this.extent,
-      this.nodeSize,
-      points,
-      createCluster})
-      : _points = points,
-        _trees = List(maxZoom + 2),
+  Fluster({
+    this.minZoom,
+    required this.maxZoom,
+    this.radius,
+    this.extent,
+    required this.nodeSize,
+    points,
+    createCluster,
+  })  : _points = points,
+        _trees = List.filled(maxZoom + 2, null),
         _createCluster = createCluster {
-    List<BaseCluster> clusters = List();
+    List<BaseCluster> clusters = [];
 
     for (int i = 0; i < _points.length; i++) {
       if (_points[i].latitude == null || _points[i].longitude == null) {
@@ -60,7 +60,7 @@ class Fluster<T extends Clusterable> {
 
     _trees[maxZoom + 1] = KDBush(points: clusters, nodeSize: nodeSize);
 
-    for (int z = maxZoom; z >= minZoom; z--) {
+    for (int z = maxZoom; z >= minZoom!; z--) {
       clusters = _buildClusters(clusters, z);
 
       _trees[z] = KDBush(points: clusters, nodeSize: nodeSize);
@@ -76,8 +76,7 @@ class Fluster<T extends Clusterable> {
   List<T> clusters(List<double> bbox, int zoom) {
     double minLng = ((bbox[0] + 180) % 360 + 360) % 360 - 180;
     double minLat = math.max(-90, math.min(90, bbox[1]));
-    double maxLng =
-        bbox[2] == 180 ? 180 : ((bbox[2] + 180) % 360 + 360) % 360 - 180;
+    double maxLng = bbox[2] == 180 ? 180 : ((bbox[2] + 180) % 360 + 360) % 360 - 180;
     double maxLat = math.max(-90, math.min(90, bbox[3]));
 
     if (bbox[2] - bbox[0] >= 360) {
@@ -85,26 +84,24 @@ class Fluster<T extends Clusterable> {
       maxLng = 180;
     } else if (minLng > maxLng) {
       List<T> easternHemisphere = clusters([minLng, minLat, 180, maxLat], zoom);
-      List<T> westernHemisphere =
-          clusters([-180, minLat, maxLng, maxLat], zoom);
+      List<T> westernHemisphere = clusters([-180, minLat, maxLng, maxLat], zoom);
 
       easternHemisphere.addAll(westernHemisphere);
 
       return easternHemisphere;
     }
 
-    KDBush tree = _trees[_limitZoom(zoom)];
-    List<int> ids =
-        tree.range(_lngX(minLng), _latY(maxLat), _lngX(maxLng), _latY(minLat));
+    KDBush? tree = _trees[_limitZoom(zoom)];
+    List<int> ids = tree!.range(_lngX(minLng), _latY(maxLat), _lngX(maxLng), _latY(minLat));
 
-    List<T> result = List();
+    List<T> result = [];
 
     for (int id in ids) {
       BaseCluster c = tree.points[id];
 
-      result.add((c.pointsSize != null && c.pointsSize > 0)
+      result.add((c.pointsSize != null && c.pointsSize! > 0)
           ? _createCluster(c, _xLng(c.x), _yLat(c.y))
-          : _points[c.index]);
+          : _points[c.index!]);
     }
 
     return result;
@@ -115,7 +112,7 @@ class Fluster<T extends Clusterable> {
   /// The list is comprised of the original points passed into the constructor
   /// or clusters of points (and perhaps other clusters) produced by
   /// createCluster().
-  List<T> children(int clusterId) {
+  List<T>? children(int? clusterId) {
     if (clusterId == null) {
       return null;
     }
@@ -123,27 +120,27 @@ class Fluster<T extends Clusterable> {
     int originId = clusterId >> 5;
     int originZoom = clusterId % 32;
 
-    KDBush index = _trees[originZoom];
-    if (index == null) {
-      return null;
-    }
+    KDBush index = _trees[originZoom]!;
+    // if (index == null) {
+    //   return null;
+    // }
 
     BaseCluster origin = index.points[originId];
-    if (origin == null) {
-      return null;
-    }
+    // if (origin == null) {
+    //   return null;
+    // }
 
-    double r = radius / (extent * math.pow(2, originZoom - 1));
-    List<int> ids = index.within(origin.x, origin.y, r);
+    double r = radius! / (extent! * math.pow(2, originZoom - 1));
+    List<int?> ids = index.within(origin.x, origin.y, r);
 
-    List<T> children = List();
-    for (int id in ids) {
-      BaseCluster c = index.points[id];
+    var children = <T>[];
+    for (int? id in ids) {
+      BaseCluster c = index.points[id!];
 
       if (c.parentId == clusterId) {
-        children.add((c.pointsSize != null && c.pointsSize > 0)
+        children.add((c.pointsSize != null && c.pointsSize! > 0)
             ? _createCluster(c, _xLng(c.x), _yLat(c.y))
-            : _points[c.index]);
+            : _points[c.index!]);
       }
     }
 
@@ -153,7 +150,7 @@ class Fluster<T extends Clusterable> {
   /// Returns a list of standalone points (not clusters) that are children of
   /// the given cluster.
   List<T> points(int clusterId) {
-    List<T> points = List();
+    var points = <T>[];
 
     _extractClusterPoints(clusterId, points);
 
@@ -161,14 +158,14 @@ class Fluster<T extends Clusterable> {
   }
 
   /// Find the children that are individual media points, not other clusters.
-  void _extractClusterPoints(int clusterId, List<T> points) {
-    List<T> childList = children(clusterId);
+  void _extractClusterPoints(int? clusterId, List<T> points) {
+    List<T>? childList = children(clusterId);
 
     if (childList == null || childList.isEmpty) {
       return;
     } else {
       for (T child in childList) {
-        if (child.isCluster) {
+        if (child.isCluster!) {
           _extractClusterPoints(child.clusterId, points);
         } else {
           points.add(child);
@@ -178,17 +175,16 @@ class Fluster<T extends Clusterable> {
   }
 
   PointCluster _createPointCluster(T feature, int id) {
-    double x = _lngX(feature.longitude);
-    double y = _latY(feature.latitude);
+    double x = _lngX(feature.longitude!);
+    double y = _latY(feature.latitude!);
 
-    return PointCluster(
-        x: x, y: y, zoom: 24, index: id, markerId: feature.markerId);
+    return PointCluster(x: x, y: y, zoom: 24, index: id, markerId: feature.markerId);
   }
 
   List<BaseCluster> _buildClusters(List<BaseCluster> points, int zoom) {
-    List<BaseCluster> clusters = List();
+    List<BaseCluster> clusters = [];
 
-    double r = radius / (extent * math.pow(2, zoom));
+    double r = radius! / (extent! * math.pow(2, zoom));
 
     for (int i = 0; i < points.length; i++) {
       BaseCluster p = points[i];
@@ -198,15 +194,14 @@ class Fluster<T extends Clusterable> {
       }
       p.zoom = zoom;
 
-      KDBush tree = _trees[zoom + 1];
+      KDBush tree = _trees[zoom + 1]!;
       List<int> neighborIds = tree.within(p.x, p.y, r);
 
       int pointsSize = p.pointsSize ?? 1;
       double wx = p.x * pointsSize;
       double wy = p.y * pointsSize;
 
-      String childMarkerId =
-          p.childMarkerId != null ? p.childMarkerId : p.markerId;
+      String? childMarkerId = p.childMarkerId != null ? p.childMarkerId : p.markerId;
 
       int id = (i << 5) + (zoom + 1);
 
@@ -250,7 +245,11 @@ class Fluster<T extends Clusterable> {
     double sin = math.sin(lat * math.pi / 180);
     double y = 0.5 - 0.25 * math.log((1 + sin) / (1 - sin)) / math.pi;
 
-    return y < 0 ? 0 : y > 1 ? 1 : y;
+    return y < 0
+        ? 0
+        : y > 1
+            ? 1
+            : y;
   }
 
   double _xLng(double x) {
@@ -264,6 +263,6 @@ class Fluster<T extends Clusterable> {
   }
 
   int _limitZoom(int z) {
-    return math.max(minZoom, math.min(z, maxZoom + 1));
+    return math.max(minZoom!, math.min(z, maxZoom + 1));
   }
 }
