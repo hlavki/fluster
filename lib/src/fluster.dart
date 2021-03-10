@@ -263,6 +263,6 @@ class Fluster<T extends Clusterable> {
   }
 
   int _limitZoom(int z) {
-    return math.max(minZoom!, math.min(z, maxZoom + 1));
+    return math.max(minZoom, math.min(z, maxZoom + 1));
   }
 }
