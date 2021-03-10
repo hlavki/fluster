@@ -13,7 +13,7 @@ import 'point_cluster.dart';
 /// The List to be clustered must contain objects that conform to Clusterable.
 class Fluster<T extends Clusterable> {
   /// Any zoom value below minZoom will not generate clusters.
-  final int? minZoom;
+  final int minZoom;
 
   /// Any zoom value above maxZoom will not generate clusters.
   final int maxZoom;
@@ -38,7 +38,7 @@ class Fluster<T extends Clusterable> {
   final T Function(BaseCluster, double, double) _createCluster;
 
   Fluster({
-    this.minZoom,
+    required this.minZoom,
     required this.maxZoom,
     this.radius,
     this.extent,
@@ -60,7 +60,7 @@ class Fluster<T extends Clusterable> {
 
     _trees[maxZoom + 1] = KDBush(points: clusters, nodeSize: nodeSize);
 
-    for (int z = maxZoom; z >= minZoom!; z--) {
+    for (int z = maxZoom; z >= minZoom; z--) {
       clusters = _buildClusters(clusters, z);
 
       _trees[z] = KDBush(points: clusters, nodeSize: nodeSize);

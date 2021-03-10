@@ -9,15 +9,19 @@ class Cluster extends BaseCluster {
     required double x,
     required double y,
     required int id,
-    required int? pointsSize,
-    required String? childMarkerId,
+    int? pointsSize,
+    String? childMarkerId,
+    int? zoom,
+    int? parentId,
   }) : super(
-          x: x,
+    x: x,
           y: y,
           id: id,
           pointsSize: pointsSize,
           childMarkerId: childMarkerId,
+          // Max value
+          zoom: zoom ?? 24,
+          parentId: parentId ?? -1,
           isCluster: true,
-          zoom: 24,
         );
 }

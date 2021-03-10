@@ -7,7 +7,7 @@ class BaseCluster {
   double y;
   int zoom;
   int? pointsSize;
-  int? parentId;
+  int parentId;
   int? index;
   int? id;
   bool isCluster;
@@ -23,7 +23,7 @@ class BaseCluster {
     required this.y,
     required this.zoom,
     this.pointsSize,
-    this.parentId,
+    required this.parentId,
     this.index,
     this.id,
     required this.isCluster,

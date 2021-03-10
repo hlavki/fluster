@@ -24,16 +24,23 @@ class KDBush {
     }
 
     _sortKD(
-        ids: ids, coordinates: coordinates, nodeSize: nodeSize, left: 0, right: (ids.length - 1), axis: 0);
+      ids: ids,
+      coordinates: coordinates,
+      nodeSize: nodeSize,
+      left: 0,
+      right: (ids.length - 1),
+      axis: 0,
+    );
   }
 
-  void _sortKD(
-      {required List<int> ids,
-      required List<double> coordinates,
-      required int nodeSize,
-      required int left,
-      required int right,
-      required int axis}) {
+  void _sortKD({
+    required List<int> ids,
+    required List<double> coordinates,
+    required int nodeSize,
+    required int left,
+    required int right,
+    required int axis,
+  }) {
     if (right - left <= nodeSize) {
       return;
     }
